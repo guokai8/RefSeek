@@ -54,6 +54,9 @@ struct PaperDetailView: View {
                         MetadataRow(label: "Source", value: source)
                     }
                     MetadataRow(label: "Added", value: paper.dateAdded.formatted(date: .abbreviated, time: .shortened))
+                    if let path = paper.pdfPath, paper.hasPDF {
+                        MetadataRow(label: "PDF", value: path)
+                    }
                 }
 
                 Divider()
@@ -69,6 +72,15 @@ struct PaperDetailView: View {
                             Label("Open PDF", systemImage: "doc.fill")
                         }
                         .buttonStyle(.borderedProminent)
+
+                        Button {
+                            if let path = paper.pdfPath {
+                                NSWorkspace.shared.selectFile(path, inFileViewerRootedAtPath: "")
+                            }
+                        } label: {
+                            Label("Show in Finder", systemImage: "folder")
+                        }
+                        .buttonStyle(.bordered)
                     } else {
                         if isDownloading {
                             ProgressView()

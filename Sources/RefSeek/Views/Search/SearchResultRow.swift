@@ -70,10 +70,20 @@ struct SearchResultRow: View {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text("Downloaded")
+                        Text("Downloaded — saved to Library")
                             .font(.callout)
                             .fontWeight(.medium)
                             .foregroundStyle(.green)
+                        Button {
+                            let folder = UserDefaults.standard.string(forKey: AppConstants.downloadFolderKey)
+                                ?? AppConstants.defaultDownloadFolder
+                            NSWorkspace.shared.open(URL(fileURLWithPath: folder))
+                        } label: {
+                            Label("Open Folder", systemImage: "folder")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
                     }
                 case .failed(let message):
                     HStack(spacing: 8) {

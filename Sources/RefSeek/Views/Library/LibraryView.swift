@@ -128,6 +128,18 @@ struct LibraryView: View {
         .toolbar {
             ToolbarItem {
                 Button {
+                    let folder = UserDefaults.standard.string(forKey: AppConstants.downloadFolderKey)
+                        ?? AppConstants.defaultDownloadFolder
+                    let url = URL(fileURLWithPath: folder)
+                    try? FileManager.default.createDirectory(at: url, withIntermediateDirectories: true)
+                    NSWorkspace.shared.open(url)
+                } label: {
+                    Label("Open Download Folder", systemImage: "folder")
+                }
+                .help("Open the folder where PDFs are saved")
+            }
+            ToolbarItem {
+                Button {
                     showingExportSheet = true
                 } label: {
                     Label("Export BibTeX", systemImage: "square.and.arrow.up")
