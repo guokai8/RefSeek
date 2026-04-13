@@ -3,6 +3,10 @@ import AppKit
 
 enum AppConstants {
     static let appName = "RefSeek"
+    static let appVersion = "1.1.0"
+
+    // MARK: - Contact (used in API User-Agent headers)
+    static let contactEmail = "guokai8@gmail.com"
 
     // MARK: - API Endpoints
     static let crossRefBaseURL = "https://api.crossref.org/works"

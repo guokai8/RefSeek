@@ -55,7 +55,7 @@ enum OpenAlexSearcher {
 
         var request = URLRequest(url: url)
         request.timeoutInterval = 15
-        request.setValue("RefSeek/1.0 (mailto:refseek@example.com)", forHTTPHeaderField: "User-Agent")
+        request.setValue("\(AppConstants.appName)/\(AppConstants.appVersion) (mailto:\(AppConstants.contactEmail))", forHTTPHeaderField: "User-Agent")
 
         let (data, response) = try await URLSession.shared.data(for: request)
         guard let http = response as? HTTPURLResponse, http.statusCode == 200 else {

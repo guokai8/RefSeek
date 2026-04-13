@@ -22,14 +22,19 @@
 ### Search & Download
 - **Multi-Engine Search**: Search across **PubMed**, **CrossRef**, **Semantic Scholar**, and **OpenAlex** — up to 200 results per query
 - **Smart Query Parsing**: Supports structured queries (`author:Smith title:CRISPR year:2024 journal:Nature`)
-- **Multi-Source PDF Download**: Tries Unpaywall (legal open access) → PubMed Central → Sci-Hub
+- **Advanced Search Filters**: Abstract keyword, Open Access toggle, minimum citations
+- **Multi-Source PDF Download**: Semantic Scholar → OpenAlex → Europe PMC → Unpaywall → PMC → Sci-Hub
 - **Batch Download**: Select multiple results and download with one click, or bulk download all
-- **Sort Results**: By relevance, year, citation count, or journal name
+- **Sort Results**: By relevance, year, citation count, impact factor, journal, author, or title
+- **Journal Impact Factor**: Bundled JCR database (130+ journals) with OpenAlex fallback
+- **JCR Quartile Badges**: Color-coded Q1–Q4 quartile display for each result
+- **Open Access Badges**: Instantly see which papers are freely available
 
 ### Paper Library
 - **Organize**: Tags, categories, notes, and full-text search/filter
 - **BibTeX Export**: Generate citations for individual papers or the entire library
 - **PDF Viewer**: Open downloaded PDFs directly
+- **BibTeX Import**: Paste or import BibTeX entries
 
 ### AI Features (built-in, no setup required)
 - **Similar Papers**: Automatically finds related papers in your library using Apple NLEmbedding
@@ -104,7 +109,9 @@ Search Engine (PubMed / CrossRef / Semantic Scholar / OpenAlex)
     ↓
 Results with metadata (title, authors, journal, year, citation count)
     ↓
-PDF Download: Unpaywall → PMC → Sci-Hub
+Enrichment: Impact Factor (JCR DB + OpenAlex) · OA status · JCR Quartile
+    ↓
+PDF Download: Semantic Scholar → OpenAlex → Europe PMC → Unpaywall → PMC → Sci-Hub
     ↓
 Paper Library (JSON persistence)
     ↓
@@ -131,11 +138,12 @@ Sources/RefSeek/
 │   ├── OllamaHelper.swift        # Ollama API client
 │   ├── PaperStore.swift          # JSON persistence layer
 │   ├── PaperFetcher.swift        # PDF download orchestration
+│   ├── JournalIFLookup.swift     # Impact factor lookup (JCR DB + OpenAlex)
 │   ├── DOIResolver.swift         # CrossRef API / DOI resolution
 │   ├── PubMedSearcher.swift      # PubMed E-utilities
 │   ├── SemanticScholarSearcher.swift
 │   ├── OpenAlexSearcher.swift
-│   └── Providers/                # Unpaywall, PMC, Sci-Hub
+│   └── Providers/                # Semantic Scholar, OpenAlex, Europe PMC, Unpaywall, PMC, Sci-Hub
 └── Utilities/                    # Constants, parsers, formatters
 ```
 

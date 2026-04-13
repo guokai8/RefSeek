@@ -1,8 +1,11 @@
 import SwiftUI
 
 struct SearchResultRow: View {
+    @EnvironmentObject private var store: PaperStore
     let result: SearchResult
     let onDownload: () -> Void
+    @State private var showCategoryPicker = false
+    @State private var newCategory = ""
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -30,6 +33,21 @@ struct SearchResultRow: View {
                 }
                 if let citations = result.citationCount {
                     MetadataBadge(text: "\(citations) cited", color: .orange)
+                }
+                if let impactFactor = result.journalImpactFactor {
+                    let prefix = result.ifSource == "JCR" ? "IF:" : "IF~"
+                    MetadataBadge(text: String(format: "\(prefix) %.1f", impactFactor), color: .purple)
+                }
+                if let quartile = result.jcrQuartile {
+                    MetadataBadge(
+                        text: quartile,
+                        color: quartile == "Q1" ? .red :
+                               quartile == "Q2" ? .orange :
+                               quartile == "Q3" ? .yellow : .gray
+                    )
+                }
+                if result.isOpenAccess == true {
+                    MetadataBadge(text: "Open Access", color: .green)
                 }
                 if !result.doi.isEmpty {
                     Text(result.doi)
@@ -70,10 +88,30 @@ struct SearchResultRow: View {
                     HStack(spacing: 4) {
                         Image(systemName: "checkmark.circle.fill")
                             .foregroundStyle(.green)
-                        Text("Downloaded — saved to Library")
-                            .font(.callout)
-                            .fontWeight(.medium)
-                            .foregroundStyle(.green)
+                        VStack(alignment: .leading, spacing: 1) {
+                            Text("Downloaded")
+                                .font(.callout)
+                                .fontWeight(.medium)
+                                .foregroundStyle(.green)
+                            if let source = store.paper(forDOI: result.doi)?.source {
+                                Text("via \(source)")
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                        // Category assignment
+                        Button {
+                            showCategoryPicker.toggle()
+                        } label: {
+                            Label(paperCategory.isEmpty ? "Set Category" : paperCategory,
+                                  systemImage: "folder.badge.plus")
+                                .font(.caption)
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.mini)
+                        .popover(isPresented: $showCategoryPicker, arrowEdge: .bottom) {
+                            categoryPickerPopover
+                        }
                         Button {
                             let folder = UserDefaults.standard.string(forKey: AppConstants.downloadFolderKey)
                                 ?? AppConstants.defaultDownloadFolder
@@ -86,21 +124,89 @@ struct SearchResultRow: View {
                         .controlSize(.mini)
                     }
                 case .failed(let message):
-                    HStack(spacing: 8) {
-                        Image(systemName: "exclamationmark.triangle.fill")
-                            .foregroundStyle(.orange)
-                        Text(message)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                        Button("Retry", action: onDownload)
-                            .buttonStyle(.bordered)
-                            .controlSize(.small)
+                    VStack(alignment: .trailing, spacing: 4) {
+                        HStack(spacing: 8) {
+                            Image(systemName: "exclamationmark.triangle.fill")
+                                .foregroundStyle(.orange)
+                            Text(message)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(2)
+                            Button("Retry", action: onDownload)
+                                .buttonStyle(.bordered)
+                                .controlSize(.small)
+                        }
+                        Text("Tried: Unpaywall → PMC → Europe PMC → S2 → OpenAlex → Sci-Hub")
+                            .font(.caption2)
+                            .foregroundStyle(.tertiary)
                     }
                 }
             }
         }
         .padding(.vertical, 8)
+    }
+
+    private var paperCategory: String {
+        store.paper(forDOI: result.doi)?.category ?? ""
+    }
+
+    private var categoryPickerPopover: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Assign Category")
+                .font(.headline)
+
+            if !store.categories.isEmpty {
+                ForEach(store.categories, id: \.self) { cat in
+                    Button {
+                        assignCategory(cat)
+                    } label: {
+                        HStack {
+                            Image(systemName: paperCategory == cat ? "folder.fill" : "folder")
+                                .foregroundStyle(.orange)
+                            Text(cat)
+                            Spacer()
+                            if paperCategory == cat {
+                                Image(systemName: "checkmark")
+                                    .foregroundStyle(.blue)
+                            }
+                        }
+                    }
+                    .buttonStyle(.plain)
+                }
+                Divider()
+            }
+
+            HStack(spacing: 4) {
+                TextField("New category...", text: $newCategory)
+                    .textFieldStyle(.roundedBorder)
+                    .font(.caption)
+                    .onSubmit {
+                        if !newCategory.trimmingCharacters(in: .whitespaces).isEmpty {
+                            assignCategory(newCategory.trimmingCharacters(in: .whitespaces))
+                            newCategory = ""
+                        }
+                    }
+                Button {
+                    let name = newCategory.trimmingCharacters(in: .whitespaces)
+                    guard !name.isEmpty else { return }
+                    assignCategory(name)
+                    newCategory = ""
+                } label: {
+                    Image(systemName: "plus.circle.fill")
+                }
+                .buttonStyle(.plain)
+                .disabled(newCategory.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+        }
+        .padding()
+        .frame(width: 220)
+    }
+
+    private func assignCategory(_ category: String) {
+        if let paper = store.paper(forDOI: result.doi) {
+            store.setCategory(category, for: paper)
+        }
+        showCategoryPicker = false
     }
 }
 

@@ -2,6 +2,8 @@ import SwiftUI
 
 struct LibraryView: View {
     @EnvironmentObject private var store: PaperStore
+    /// nil = all papers, "" = uncategorized, "name" = specific category
+    var categoryFilter: String?
     @State private var searchText = ""
     @State private var selectedPaper: Paper?
     @State private var showingExportSheet = false
@@ -9,6 +11,15 @@ struct LibraryView: View {
 
     var filteredPapers: [Paper] {
         var papers = store.search(searchText)
+        // Apply sidebar category filter first
+        if let sidebarCat = categoryFilter {
+            if sidebarCat.isEmpty {
+                papers = papers.filter { $0.category.isEmpty }
+            } else {
+                papers = papers.filter { $0.category == sidebarCat }
+            }
+        }
+        // Then apply in-view chip filter
         if let cat = selectedCategory {
             if cat == "__uncategorized__" {
                 papers = papers.filter { $0.category.isEmpty }
@@ -19,12 +30,17 @@ struct LibraryView: View {
         return papers
     }
 
+    /// Whether to show the category filter bar (only when viewing "All Papers")
+    private var showCategoryBar: Bool {
+        categoryFilter == nil && !store.categories.isEmpty
+    }
+
     var body: some View {
         HSplitView {
             // Paper list with category filter
             VStack(spacing: 0) {
-                // Category filter bar
-                if !store.categories.isEmpty {
+                // Category filter bar (only when viewing All Papers)
+                if showCategoryBar {
                     ScrollView(.horizontal, showsIndicators: false) {
                         HStack(spacing: 6) {
                             CategoryChip(name: "All", icon: "tray.full", isSelected: selectedCategory == nil) {
@@ -124,7 +140,16 @@ struct LibraryView: View {
                 .frame(minWidth: 300, maxWidth: .infinity, maxHeight: .infinity)
             }
         }
-        .navigationTitle("Library (\(filteredPapers.count) papers)")
+        .navigationTitle({
+            if let cat = categoryFilter {
+                if cat.isEmpty {
+                    return "Uncategorized (\(filteredPapers.count) papers)"
+                } else {
+                    return "\(cat) (\(filteredPapers.count) papers)"
+                }
+            }
+            return "Library (\(filteredPapers.count) papers)"
+        }())
         .toolbar {
             ToolbarItem {
                 Button {

@@ -11,6 +11,9 @@ struct SearchView: View {
     @State private var advJournal = ""
     @State private var advYearFrom = ""
     @State private var advYearTo = ""
+    @State private var advAbstract = ""
+    @State private var advOpenAccessOnly = false
+    @State private var advMinCitations = ""
 
     var body: some View {
         VStack(spacing: 0) {
@@ -159,6 +162,18 @@ struct SearchView: View {
                                 .frame(width: 60)
                         }
                     }
+                    HStack(spacing: 12) {
+                        LabeledField("Abstract", text: $advAbstract)
+                        HStack(spacing: 10) {
+                            LabeledField("Min Cites", text: $advMinCitations)
+                            Toggle(isOn: $advOpenAccessOnly) {
+                                Label("OA Only", systemImage: "lock.open")
+                                    .font(.caption)
+                            }
+                            .toggleStyle(.checkbox)
+                            .fixedSize()
+                        }
+                    }
                     HStack {
                         Text("Use fields above or type syntax like  author:Smith year:2020  in the search bar")
                             .font(.caption2)
@@ -166,7 +181,8 @@ struct SearchView: View {
                         Spacer()
                         Button("Clear") {
                             advTitle = ""; advAuthor = ""; advJournal = ""
-                            advYearFrom = ""; advYearTo = ""
+                            advYearFrom = ""; advYearTo = ""; advAbstract = ""
+                            advMinCitations = ""; advOpenAccessOnly = false
                         }
                         .buttonStyle(.borderless)
                         .font(.caption)
@@ -410,7 +426,7 @@ struct SearchView: View {
                         }
                         .buttonStyle(.plain)
 
-                        SearchResultRow(result: result) {
+                        SearchResultRow(result: viewModel.enriched(result)) {
                             Task { await viewModel.download(result: result, store: store) }
                         }
                     }
@@ -429,6 +445,7 @@ struct SearchView: View {
         let j = advJournal.trimmingCharacters(in: .whitespaces)
         let yf = advYearFrom.trimmingCharacters(in: .whitespaces)
         let yt = advYearTo.trimmingCharacters(in: .whitespaces)
+        let ab = advAbstract.trimmingCharacters(in: .whitespaces)
 
         if !t.isEmpty { parts.append(t.contains(" ") ? "title:\"\(t)\"" : "title:\(t)") }
         if !a.isEmpty { parts.append(a.contains(" ") ? "author:\"\(a)\"" : "author:\(a)") }
@@ -440,10 +457,32 @@ struct SearchView: View {
                 parts.append("year:\(yf)")
             }
         }
+        // Abstract keywords go into general terms (most APIs search full text)
+        if !ab.isEmpty { parts.append(ab) }
 
         if !parts.isEmpty {
             viewModel.query = parts.joined(separator: " ")
-            Task { await viewModel.search() }
+            Task {
+                await viewModel.search()
+                // Post-search client-side filters
+                applyPostSearchFilters()
+            }
+        }
+    }
+
+    /// Apply client-side filters after search (OA-only, min citations)
+    private func applyPostSearchFilters() {
+        let minCites = Int(advMinCitations.trimmingCharacters(in: .whitespaces)) ?? 0
+        if advOpenAccessOnly || minCites > 0 {
+            viewModel.results = viewModel.results.filter { result in
+                if advOpenAccessOnly && result.isOpenAccess != true { return false }
+                if minCites > 0, let cites = result.citationCount, cites < minCites { return false }
+                if minCites > 0 && result.citationCount == nil { return false }
+                return true
+            }
+            if viewModel.results.isEmpty {
+                viewModel.errorMessage = "No results match the filters (OA: \(advOpenAccessOnly), min citations: \(minCites))"
+            }
         }
     }
 }

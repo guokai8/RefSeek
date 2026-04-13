@@ -1,11 +1,19 @@
 import Foundation
 
 class PaperFetcher {
+    /// PDF providers tried in order: legal open-access first, Sci-Hub last
     private let providers: [PaperProvider] = [
         UnpaywallProvider(),
         PMCProvider(),
+        EuropePMCProvider(),
+        SemanticScholarPDFProvider(),
+        OpenAlexPDFProvider(),
         ScihubProvider()
     ]
+
+    /// Track which provider succeeded (for UI feedback)
+    @Published var lastUsedProvider: String?
+    @Published var triedProviders: [String] = []
 
     /// Download folder path
     private var downloadFolder: String {
@@ -15,7 +23,13 @@ class PaperFetcher {
 
     /// Try all providers in order to get a PDF URL, then download it
     func fetchPDF(doi: String, progressHandler: ((Double) -> Void)? = nil) async throws -> (url: URL, provider: String) {
+        await MainActor.run {
+            triedProviders = []
+            lastUsedProvider = nil
+        }
+
         for provider in providers {
+            await MainActor.run { triedProviders.append(provider.name) }
             do {
                 if let pdfURL = try await provider.pdfURL(for: doi) {
                     // Download the PDF
@@ -27,6 +41,7 @@ class PaperFetcher {
                         continue
                     }
 
+                    await MainActor.run { lastUsedProvider = provider.name }
                     return (localURL, provider.name)
                 }
             } catch {

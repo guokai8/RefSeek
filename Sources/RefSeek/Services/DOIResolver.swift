@@ -45,7 +45,7 @@ enum DOIResolver {
         }
 
         var request = URLRequest(url: url)
-        request.setValue("RefSeek/1.0 (mailto:refseek@example.com)", forHTTPHeaderField: "User-Agent")
+        request.setValue("\(AppConstants.appName)/\(AppConstants.appVersion) (mailto:\(AppConstants.contactEmail))", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -94,7 +94,7 @@ enum DOIResolver {
         }
 
         var request = URLRequest(url: url)
-        request.setValue("RefSeek/1.0 (mailto:refseek@example.com)", forHTTPHeaderField: "User-Agent")
+        request.setValue("\(AppConstants.appName)/\(AppConstants.appVersion) (mailto:\(AppConstants.contactEmail))", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
@@ -138,7 +138,7 @@ enum DOIResolver {
         }
 
         var request = URLRequest(url: url)
-        request.setValue("RefSeek/1.0 (mailto:refseek@example.com)", forHTTPHeaderField: "User-Agent")
+        request.setValue("\(AppConstants.appName)/\(AppConstants.appVersion) (mailto:\(AppConstants.contactEmail))", forHTTPHeaderField: "User-Agent")
         request.timeoutInterval = 15
 
         let (data, response) = try await URLSession.shared.data(for: request)
