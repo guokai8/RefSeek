@@ -34,7 +34,7 @@ class AIService: ObservableObject {
         } else if OllamaManager.isInstalled {
             // Installed but not running — try starting
             OllamaManager.start()
-            try? await Task.sleep(for: .seconds(3))
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
             if await OllamaHelper.isAvailable() {
                 ollamaStatus = .available
                 let models = await OllamaHelper.availableModels()

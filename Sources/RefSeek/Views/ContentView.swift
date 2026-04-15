@@ -48,7 +48,7 @@ struct ContentView: View {
     @State private var cachedUncategorizedCount: Int = 0
 
     var body: some View {
-        NavigationSplitView {
+        NavigationView {
             VStack(spacing: 0) {
                 // Cat mascot header
                 HStack(spacing: 6) {
@@ -123,11 +123,11 @@ struct ContentView: View {
                 }
                 .listStyle(.sidebar)
                 .onAppear { refreshCachedCategories() }
-                .onChange(of: store.papers.count) { _, _ in refreshCachedCategories() }
-                .onChange(of: store.knownCategories) { _, _ in refreshCachedCategories() }
+                .onChange(of: store.papers.count) { _ in refreshCachedCategories() }
+                .onChange(of: store.knownCategories) { _ in refreshCachedCategories() }
             }
-            .navigationSplitViewColumnWidth(min: 180, ideal: 210)
-        } detail: {
+            .frame(minWidth: 180, idealWidth: 210, maxWidth: 280)
+
             switch selectedItem ?? .search {
             case .search:
                 SearchView()

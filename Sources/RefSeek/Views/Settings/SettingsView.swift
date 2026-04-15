@@ -138,7 +138,6 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .formStyle(.grouped)
             .tabItem { Label("General", systemImage: "gear") }
 
             // Sci-Hub Mirrors
@@ -220,7 +219,6 @@ struct SettingsView: View {
                         .foregroundStyle(.secondary)
                 }
             }
-            .formStyle(.grouped)
             .tabItem { Label("Sci-Hub", systemImage: "network") }
 
             // AI Tab
@@ -348,7 +346,7 @@ struct SettingsView: View {
                                         Button {
                                             OllamaManager.start()
                                             Task {
-                                                try? await Task.sleep(for: .seconds(3))
+                                                try? await Task.sleep(nanoseconds: 3_000_000_000)
                                                 await aiService.checkOllama()
                                             }
                                         } label: {
@@ -395,7 +393,7 @@ struct SettingsView: View {
                             Button {
                                 OllamaManager.stop()
                                 Task {
-                                    try? await Task.sleep(for: .seconds(1))
+                                    try? await Task.sleep(nanoseconds: 1_000_000_000)
                                     await aiService.checkOllama()
                                 }
                             } label: {
@@ -416,7 +414,6 @@ struct SettingsView: View {
                     }
                 }
             }
-            .formStyle(.grouped)
             .tabItem { Label("AI", systemImage: "sparkles") }
             .onAppear {
                 Task { localModels = await OllamaManager.localModels() }
@@ -454,7 +451,7 @@ struct SettingsView: View {
 
             // Step 2: Start server
             OllamaManager.start()
-            try await Task.sleep(for: .seconds(3))
+            try await Task.sleep(nanoseconds: 3_000_000_000)
 
             // Step 3: Pull selected model
             isPullingModel = true

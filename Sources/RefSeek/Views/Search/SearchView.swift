@@ -229,7 +229,7 @@ struct SearchView: View {
         .animation(.spring(response: 0.3, dampingFraction: 0.8), value: showAdvanced)
         .navigationTitle("Search")
         .onAppear { isSearchFocused = true }
-        .onChange(of: globalSearch.pendingQuery) { _, newQuery in
+        .onChange(of: globalSearch.pendingQuery) { newQuery in
             if let query = newQuery, !query.isEmpty {
                 viewModel.query = query
                 globalSearch.pendingQuery = nil

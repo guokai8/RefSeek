@@ -26,17 +26,9 @@ struct RefSeekApp: App {
                     await embeddingStore.indexPapers(store.papers)
                 }
         }
-        .defaultSize(width: 900, height: 650)
         .commands {
             CommandGroup(replacing: .newItem) {}
         }
-
-        MenuBarExtra("RefSeek", systemImage: "doc.text.magnifyingglass") {
-            MenuBarView()
-                .environmentObject(store)
-                .environmentObject(embeddingStore)
-        }
-        .menuBarExtraStyle(.window)
 
         Settings {
             SettingsView()
@@ -53,6 +45,7 @@ class GlobalSearchState: ObservableObject {
 final class RefSeekDelegate: NSObject, NSApplicationDelegate {
     private var globalMonitor: Any?
     private var signalFileTimer: Timer?
+    private var statusItem: NSStatusItem?
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Set custom app icon from bundled resources
@@ -60,6 +53,9 @@ final class RefSeekDelegate: NSObject, NSApplicationDelegate {
            let iconImage = NSImage(contentsOf: iconURL) {
             NSApp.applicationIconImage = iconImage
         }
+
+        // Setup menu bar status item (works on macOS 12+)
+        setupStatusItem()
 
         // Register global hotkey: user-configurable (default ⌘⇧R) to search selected text from any app
         registerGlobalHotkey()
@@ -178,5 +174,44 @@ final class RefSeekDelegate: NSObject, NSApplicationDelegate {
                 return
             }
         }
+    }
+
+    // MARK: - Menu Bar Status Item
+
+    private func setupStatusItem() {
+        statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        if let button = statusItem?.button {
+            button.image = NSImage(systemSymbolName: "doc.text.magnifyingglass", accessibilityDescription: "RefSeek")
+        }
+
+        let menu = NSMenu()
+        menu.addItem(withTitle: "Open RefSeek", action: #selector(openMainWindow), keyEquivalent: "")
+        menu.addItem(withTitle: "Search from Clipboard", action: #selector(searchFromClipboard), keyEquivalent: "")
+        menu.addItem(NSMenuItem.separator())
+        menu.addItem(withTitle: "Quit", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+
+        for item in menu.items where item.action != #selector(NSApplication.terminate(_:)) {
+            item.target = self
+        }
+
+        statusItem?.menu = menu
+    }
+
+    @objc private func openMainWindow() {
+        NSApp.activate(ignoringOtherApps: true)
+        for window in NSApp.windows where window.canBecomeMain {
+            window.collectionBehavior = [.moveToActiveSpace, .fullScreenAuxiliary]
+            window.makeKeyAndOrderFront(nil)
+            window.orderFrontRegardless()
+            return
+        }
+    }
+
+    @objc private func searchFromClipboard() {
+        guard let text = NSPasteboard.general.string(forType: .string),
+              !text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty else { return }
+        let trimmed = String(text.trimmingCharacters(in: .whitespacesAndNewlines).prefix(200))
+        GlobalSearchState.shared.pendingQuery = trimmed
+        openMainWindow()
     }
 }

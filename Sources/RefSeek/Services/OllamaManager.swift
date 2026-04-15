@@ -121,7 +121,7 @@ enum OllamaManager {
         // Ensure server is running
         if !isRunning {
             start()
-            try await Task.sleep(for: .seconds(3))
+            try await Task.sleep(nanoseconds: 3_000_000_000)
         }
 
         // Use the Ollama API to pull

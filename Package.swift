@@ -4,7 +4,7 @@ import PackageDescription
 let package = Package(
     name: "RefSeek",
     platforms: [
-        .macOS(.v14)
+        .macOS(.v12)
     ],
     products: [
         .executable(name: "RefSeek", targets: ["RefSeek"])

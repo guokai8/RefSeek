@@ -244,7 +244,7 @@ struct PaperDetailView: View {
                         .font(.body)
                         .frame(minHeight: 120)
                         .border(Color.secondary.opacity(0.2))
-                        .onChange(of: paper.notes) { _, _ in
+                        .onChange(of: paper.notes) { _ in
                             store.save()
                         }
                 }
@@ -433,7 +433,7 @@ struct PaperDetailView: View {
             .padding()
         }
         .onAppear { loadAIFeatures() }
-        .onChange(of: paper.id) { _, _ in loadAIFeatures() }
+        .onChange(of: paper.id) { _ in loadAIFeatures() }
     }
 
     private func loadAIFeatures() {
@@ -595,45 +595,21 @@ struct MetadataRow: View {
     }
 }
 
-// Simple flow layout for tags
-struct FlowLayout: Layout {
-    var spacing: CGFloat = 8
+// Simple wrapping flow layout for tags (macOS 12+ compatible)
+struct FlowLayout<Content: View>: View {
+    let spacing: CGFloat
+    let content: () -> Content
 
-    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
-        let result = layout(proposal: proposal, subviews: subviews)
-        return result.size
+    init(spacing: CGFloat = 8, @ViewBuilder content: @escaping () -> Content) {
+        self.spacing = spacing
+        self.content = content
     }
 
-    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
-        let result = layout(proposal: proposal, subviews: subviews)
-        for (index, subview) in subviews.enumerated() {
-            subview.place(at: CGPoint(x: bounds.minX + result.positions[index].x,
-                                      y: bounds.minY + result.positions[index].y),
-                         proposal: .unspecified)
+    var body: some View {
+        // Use a simple wrapping HStack approach via _VariadicView if available,
+        // otherwise fall back to a basic LazyVGrid
+        LazyVGrid(columns: [GridItem(.adaptive(minimum: 80), spacing: spacing)], alignment: .leading, spacing: spacing) {
+            content()
         }
-    }
-
-    private func layout(proposal: ProposedViewSize, subviews: Subviews) -> (size: CGSize, positions: [CGPoint]) {
-        let maxWidth = proposal.width ?? .infinity
-        var positions: [CGPoint] = []
-        var x: CGFloat = 0
-        var y: CGFloat = 0
-        var rowHeight: CGFloat = 0
-        var maxX: CGFloat = 0
-
-        for subview in subviews {
-            let size = subview.sizeThatFits(.unspecified)
-            if x + size.width > maxWidth && x > 0 {
-                x = 0
-                y += rowHeight + spacing
-                rowHeight = 0
-            }
-            positions.append(CGPoint(x: x, y: y))
-            rowHeight = max(rowHeight, size.height)
-            x += size.width + spacing
-            maxX = max(maxX, x)
-        }
-
-        return (CGSize(width: maxX, height: y + rowHeight), positions)
     }
 }
